@@ -2,18 +2,20 @@
 
     paper.install(window);
 
-    config = {
-        path: undefined // The path we are drawing
+    var global = {
+        currentPath: undefined // The path we are drawing
+    }
+
+    var config = {
+        radius: 200,
+        numSectors: 8
     }
 
     window.onload = function() {
         // Get a reference to the canvas object
         var canvas = document.getElementById('myCanvas');
         // Create an empty project and a view for the canvas:
-        paper.setup(canvas);
-        // Create a Paper.js Path to draw a line into it:
-        config.path = new paper.Path();
-       
+        paper.setup(canvas);       
 
         paper.view.onFrame = function(event) {
             paper.view.draw();
@@ -31,46 +33,68 @@
         pen.minDistance = 3;
 
         pen.onMouseDown = function(event) {
-            if (config.path) {
-                config.path.selected = false;
+            if (global.currentPath) {
+                global.currentPath.selected = false;
             };
             var newPath = new Path();
             newPath.strokeColor = 'black'; // TODO make configurable
-            newPath.strokeWidth = 10; // TODO make configurable
+            newPath.strokeWidth = 1; // TODO make configurable
             newPath.fullySelected = true; 
             newPath.strokeCap = 'round'; // TODO make configurable
             newPath.strokeJoin = 'round'; // TODO make configurable
 
-            config.path = newPath;
+            global.currentPath = newPath;
         }
 
         pen.onMouseDrag = function(event) {
-            config.path.add(event.point);
+            global.currentPath.add(event.point);
         }
 
         pen.onMouseUp = function(event) {
-            config.path.selected = false;
+            global.currentPath.selected = false;
             
-            config.path.simplify();
-            // config.path.smooth(); // TODO make configurable
+            global.currentPath.simplify();
+            // global.currentPath.smooth(); // TODO make configurable
 
 
 
-            // config.path.selected = true;
+            // global.currentPath.selected = true; // use to debug vertices
         }
     }
 
+    function radiansFromDegrees(degrees) {
+        return degrees * (Math.PI / 180);
+    }
+
+    function createArc(startAngleInDegrees) {
+        var startAngleInRadians = radiansFromDegrees(startAngleInDegrees);
+        var arcAngleInRadians = radiansFromDegrees(360 / config.numSectors);
+
+        var fromPoint = new Point(
+            paper.view.center.x + config.radius * Math.cos(startAngleInRadians),
+            paper.view.center.y + config.radius * Math.sin(startAngleInRadians));
+        var throughPoint = new Point(
+            paper.view.center.x + config.radius * Math.cos(startAngleInRadians + arcAngleInRadians / 2),
+            paper.view.center.y + config.radius * Math.sin(startAngleInRadians + arcAngleInRadians / 2));
+        var toPoint = new Point(
+            paper.view.center.x + config.radius * Math.cos(startAngleInRadians + arcAngleInRadians),
+            paper.view.center.y + config.radius * Math.sin(startAngleInRadians + arcAngleInRadians))
+
+        return Path.Arc(fromPoint, throughPoint, toPoint);
+    }
+
     function createSectors() {
-        var start = new Point(paper.view.center.x, paper.view.center.y-130);
-        var through = new Point(paper.view.center.x-90, paper.view.center.y-94);
-        var to = new Point(paper.view.center.x-113, paper.view.center.y-64);
-        var sector = Path.Arc(start, through, to);
+        for (var i = 0; i < config.numSectors; i++) {
+            var sector = createArc(i * (360 / config.numSectors));
 
-        sector.add(new Point(paper.view.center.x, paper.view.center.y));
-        sector.closed = true;
+            sector.add(new Point(paper.view.center.x, paper.view.center.y));
+            sector.closed = true;
 
-        sector.strokeColor = 'red';
-        sector.strokeWidth = 1;
+            sector.strokeColor = 'red';
+            sector.strokeWidth = 1;
+            sector.dashArray = [2, 10];
+        }
+        
     }
 
     window.Symmetry = {
@@ -86,6 +110,11 @@
 
 
 
+/*
+fromPoint = Point(Center.X + Radius * Math.Cos(StartAngleInRadians), Center.Y + Radius * Math.Sin(StartAngleInRadians))
+throughPoint = Point(Center.X + Radius * Math.Cos(StartAngleInRadians + ArcAngle/2), Center.Y + Radius * Math.Sin(StartAngleInRadians + ArcAngle/2))
+toPoint = Point(Center.X + Radius * Math.Cos(StartAngleInRadians + ArcAngle), Center.Y + Radius * Math.Sin(StartAngleInRadians + ArcAngle))
 
+*/
 
 
