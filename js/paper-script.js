@@ -4,14 +4,14 @@
 
     var global = {
         currentPath: undefined, // The path we are drawing
-        sectors: [],
-        activePaths: [],
-        layers: []
+        sectors: [], // sector outlines, superficial only
+        activePaths: [], // the paths currently being drawn
+        layers: [] // paths from every action go into a new layer
     }
 
     var config = {
         radius: 200,
-        numSectors: 8
+        numSectors: 16
     }
 
     window.onload = function() {
@@ -126,10 +126,25 @@
         }
     }
 
+    function recreateSectors(number) {
+        // Clear up old sectors
+        for (var i = 0; i < config.numSectors; i++) {
+            global.sectors[i].remove();
+        }
+        global.sectors = [];
+        // Draw new sectors
+        config.numSectors = number;
+        createSectors();
+    }
+
     window.Symmetry = {
         undo: function() {
             global.layers[global.layers.length - 1].remove();
             global.layers.splice(global.layers.length - 1);
+        },
+
+        changeSymmetry: function(number) {
+            recreateSectors(number);
         }
     }
 

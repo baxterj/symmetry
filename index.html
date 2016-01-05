@@ -12,5 +12,7 @@
 <body>
     <canvas id="myCanvas" resize></canvas>
     <button onclick="Symmetry.undo()">Undo</button>
+    <input type="text" id="newSymmetry" />
+    <button onclick="Symmetry.changeSymmetry(document.getElementById('newSymmetry').value)">Change symmetry</button>
 </body>
 </html>
