@@ -11,7 +11,7 @@
 
     var config = {
         radius: 200,
-        numSectors: 16
+        numSectors: 8
     }
 
     window.onload = function() {
