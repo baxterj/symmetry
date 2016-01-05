@@ -3,7 +3,10 @@
     paper.install(window);
 
     var global = {
-        currentPath: undefined // The path we are drawing
+        currentPath: undefined, // The path we are drawing
+        sectors: [],
+        activePaths: [],
+        layers: []
     }
 
     var config = {
@@ -25,40 +28,65 @@
         createSectors();
     }
 
+    /**
+     * Deselect all active paths that exist
+     */
+    function deselectPaths() {
+        for (var i = 0; i < config.numSectors; i++) {
+            if (global.activePaths[i]) {
+                global.activePaths[i].selected = false;
+            }
+        }
+    }
 
     function createTools() {
         var pen = new Tool();
-        // The mouse has to drag at least 20pt
+        // The mouse has to drag at least minDistance pt
         // before the next drag event is fired:
-        pen.minDistance = 3;
+        pen.minDistance = 2;
 
         pen.onMouseDown = function(event) {
-            if (global.currentPath) {
-                global.currentPath.selected = false;
-            };
-            var newPath = new Path();
-            newPath.strokeColor = 'black'; // TODO make configurable
-            newPath.strokeWidth = 1; // TODO make configurable
-            newPath.fullySelected = true; 
-            newPath.strokeCap = 'round'; // TODO make configurable
-            newPath.strokeJoin = 'round'; // TODO make configurable
+            deselectPaths();
+            global.activePaths = [];
 
-            global.currentPath = newPath;
+            var layer = new Layer();
+            global.layers.push(layer);
+            for (var i = 0; i < config.numSectors; i++) {
+                var newPath = new Path();
+                newPath.strokeColor = 'black'; // TODO make configurable
+                newPath.strokeWidth = 1; // TODO make configurable
+                newPath.fullySelected = true; 
+                newPath.strokeCap = 'round'; // TODO make configurable
+                newPath.strokeJoin = 'round'; // TODO make configurable
+                global.activePaths.push(newPath);
+            }
+            deselectPaths();
         }
 
+        // Add a point to all active paths with the required rotation
         pen.onMouseDrag = function(event) {
-            global.currentPath.add(event.point);
+            var incrementAngle = 360 / config.numSectors;
+
+            for (var i = 0; i < config.numSectors; i++) {
+                var newPoint = new Point(event.point);
+
+                var rotationAngle = radiansFromDegrees(incrementAngle * i);
+                var newX = paper.view.center.x + ((newPoint.x - paper.view.center.x) * Math.cos(rotationAngle)) - ((newPoint.y - paper.view.center.y) * Math.sin(-rotationAngle));
+                var newY = paper.view.center.y + ((newPoint.x - paper.view.center.x) * Math.sin(-rotationAngle)) + ((newPoint.y - paper.view.center.y) * Math.cos(rotationAngle));
+
+                newPoint.x = newX;
+                newPoint.y = newY;
+                global.activePaths[i].add(newPoint);
+            }
         }
 
         pen.onMouseUp = function(event) {
-            global.currentPath.selected = false;
-            
-            global.currentPath.simplify();
-            // global.currentPath.smooth(); // TODO make configurable
-
-
-
-            // global.currentPath.selected = true; // use to debug vertices
+            for (var i = 0; i < config.numSectors; i++) {
+                global.activePaths[i].simplify();
+                // global.currentPath.smooth(); // TODO make configurable
+                // global.currentPath.selected = true; // use to debug vertices
+            }
+            deselectPaths();
         }
     }
 
@@ -93,28 +121,16 @@
             sector.strokeColor = 'red';
             sector.strokeWidth = 1;
             sector.dashArray = [2, 10];
+
+            global.sectors.push(sector);
         }
-        
     }
 
     window.Symmetry = {
-        // Do something
+        undo: function() {
+            global.layers[global.layers.length - 1].remove();
+            global.layers.splice(global.layers.length - 1);
+        }
     }
 
 })(this);
-
-
-
-
-
-
-
-
-/*
-fromPoint = Point(Center.X + Radius * Math.Cos(StartAngleInRadians), Center.Y + Radius * Math.Sin(StartAngleInRadians))
-throughPoint = Point(Center.X + Radius * Math.Cos(StartAngleInRadians + ArcAngle/2), Center.Y + Radius * Math.Sin(StartAngleInRadians + ArcAngle/2))
-toPoint = Point(Center.X + Radius * Math.Cos(StartAngleInRadians + ArcAngle), Center.Y + Radius * Math.Sin(StartAngleInRadians + ArcAngle))
-
-*/
-
-
